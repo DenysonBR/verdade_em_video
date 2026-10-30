@@ -17,3 +17,5 @@ Sem essa ativação, a página continua sendo um material educativo; **não anal
 - `Kit_Oficina_Verdade_em_Video.pdf`: material educativo.
 - `QRCode_Google_Lens.png`: QR Code para ferramenta externa.
 - `ATIVAR_IA_GRATIS.txt`: configuração e limites.
+
+site: https://denysonbr.github.io/verdade_em_video/
