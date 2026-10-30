@@ -1,0 +1,26 @@
+ATIVAR A ANÁLISE REAL POR IA — VERDADE EM VÍDEO
+================================================
+O arquivo HTML NÃO analisa vídeos sozinho. Este pacote contém integração ao Firebase AI Logic, que pode usar a modalidade gratuita da API Gemini (sujeita a limites). Ainda falta conectar SEU projeto Firebase.
+
+1. Acesse https://console.firebase.google.com/ e crie um projeto no plano Spark (gratuito, sem vincular cartão/billing).
+2. Cadastre um aplicativo Web dentro do projeto. Copie a configuração pública `firebaseConfig` mostrada pelo console.
+3. No Firebase Console, abra AI Logic > Começar > escolha Gemini Developer API e siga o assistente. Não escolha Agent Platform/Vertex AI caso queira permanecer no plano gratuito.
+4. Configure o Firebase App Check para Web com reCAPTCHA Enterprise. Crie uma chave de site baseada em pontuação para o DOMÍNIO onde seu GitHub Pages será publicado (ex.: usuario.github.io); adicione a chave ao App Check. O Google informa uma cota grátis do reCAPTCHA Enterprise; confira as condições antes de ativar cobranças.
+5. No arquivo `firebase-config.js`, substitua os campos COLE_AQUI pelos campos públicos `apiKey`, `authDomain`, `projectId`, `appId` e pela chave pública do site reCAPTCHA Enterprise. NÃO use nem publique chaves SECRETAS do Gemini.
+6. Envie/atualize os arquivos do ZIP no repositório GitHub Pages, mantendo `index.html`, `ai-video.js`, `firebase-config.js` e a cartilha na raiz.
+7. Abra o site publicado, escolha “Analisar vídeo”, cole um vídeo PÚBLICO do YouTube e veja se retorna a avaliação preliminar. Sem configurar o Firebase, você verá um aviso explícito, e não uma resposta inventada.
+
+IMPORTANTE
+• A IA recebe o link do vídeo e a alegação digitada; o Google processa os dados e tem suas próprias políticas de uso.
+• A análise de áudio/imagens NÃO é prova de que a notícia é verdadeira. Comparar datas, fontes e contexto é obrigatório para um veredito de checagem factual.
+• Facebook, Instagram, TikTok e similares NÃO têm análise automática pelo link neste pacote. A página oferece instruções e ajuda para investigar esses links.
+• A API pode recusar vídeos privados, removidos ou indisponíveis e pode atingir a cota gratuita.
+• Os testes realizados sem uma configuração Firebase do proprietário NÃO confirmam acesso final à API.
+• A configuração do Firebase/App Check é um serviço externo sem servidor próprio, mas tem limites e requer o cadastro pelo responsável.
+
+Fontes oficiais:
+https://firebase.google.com/docs/ai-logic/get-started
+https://firebase.google.com/docs/ai-logic/analyze-video
+https://firebase.google.com/docs/ai-logic/pricing
+https://firebase.google.com/docs/app-check/web/recaptcha-enterprise-provider
+https://ai.google.dev/gemini-api/docs/video-understanding
