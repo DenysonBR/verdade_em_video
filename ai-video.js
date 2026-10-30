@@ -13,9 +13,19 @@ const status = $('#ai-real-status');
 const output = $('#ai-real-output');
 const firebaseConf = window.VERDADE_FIREBASE || {};
 const siteKey = window.VERDADE_RECAPTCHA_SITE_KEY || '';
-const configured = firebaseConf.apiKey && firebaseConf.projectId && firebaseConf.appId &&
-  !Object.values(firebaseConf).some(v => typeof v === 'string' && v.includes('COLE_AQUI')) &&
-  siteKey && !siteKey.includes('COLE_AQUI');
+// O HTML carrega firebase-config.js antes deste módulo.
+// Esta verificação confirma somente a presença dos dados públicos; não é teste da API.
+const required = ['apiKey','authDomain','projectId','appId'];
+const missing = required.filter(key => !firebaseConf[key] || String(firebaseConf[key]).includes('COLE_AQUI'));
+if (!siteKey || siteKey.includes('COLE_AQUI')) missing.push('chave pública do reCAPTCHA');
+const configured = missing.length === 0;
+const localStatus = $('#link-status');
+if (localStatus) {
+  localStatus.textContent = configured
+    ? '✓ Configuração pública do Firebase identificada. A conexão com a IA será testada quando você analisar um vídeo público do YouTube.'
+    : 'IA ainda não configurada neste navegador. Dados ausentes: ' + missing.join(', ') + '. Confira firebase-config.js e recarregue a página.';
+}
+
 
 function parseYouTubeLink(raw) {
   let u;
@@ -60,14 +70,16 @@ async function getModel() {
       import('https://www.gstatic.com/firebasejs/12.4.0/firebase-ai.js')
     ]);
     const app = appMod.initializeApp(firebaseConf);
-    checkMod.initializeAppCheck(app, {
+    const appCheck = checkMod.initializeAppCheck(app, {
       provider: new checkMod.ReCaptchaEnterpriseProvider(siteKey),
       isTokenAutoRefreshEnabled: true
     });
+    // Confirma que o navegador recebeu um token do App Check antes de chamar o Gemini.
+    if (typeof checkMod.getToken === 'function') await checkMod.getToken(appCheck, false);
     const ai = aiMod.getAI(app, { backend: new aiMod.GoogleAIBackend() });
     return aiMod.getGenerativeModel(ai, { model: 'gemini-3.5-flash-lite' });
   })();
-  return modelPromise;
+  try { return await modelPromise; } catch (error) { modelPromise = null; throw error; }
 }
 let sequence = 0;
 form.addEventListener('submit', async (event) => {
@@ -80,13 +92,15 @@ form.addEventListener('submit', async (event) => {
     return;
   }
   if (!configured) {
-    show('A análise por IA ainda não foi ativada pelo responsável pelo projeto.', 'O site consegue verificar o formato do link, mas não pode examinar o vídeo enquanto o Firebase AI Logic e o App Check não forem configurados. Leia o arquivo ATIVAR_IA_GRATIS.txt incluído no pacote. Nenhum resultado foi inventado.');
+    show('A configuração da IA não foi encontrada nesta versão do site.', 'Dados ausentes: ' + missing.join(', ') + '. Verifique firebase-config.js e atualize a página. Nenhum resultado foi inventado.');
     return;
   }
   title.textContent = 'Analisando conteúdo do YouTube com Gemini';
-  show('Solicitando análise de imagens e áudio…');
+  show('Conectando ao Firebase e verificando o App Check…');
   try {
     const model = await getModel();
+    if (current !== sequence) return;
+    show('Conexão iniciada. Solicitando análise de imagens e áudio do YouTube…');
     const claim = $('#video-claim').value.trim();
     const response = await model.generateContent([
       { fileData: { fileUri: youtube, mimeType: 'video/mp4' } },
@@ -100,7 +114,8 @@ form.addEventListener('submit', async (event) => {
     if (current !== sequence) return;
     const msg = String(err?.message || err);
     let guidance = 'Confira a configuração do Firebase AI Logic e do App Check e tente outro vídeo público do YouTube.';
-    if (/quota|429|resource.exhausted/i.test(msg)) guidance = 'O limite gratuito foi atingido ou houve excesso de solicitações. Tente novamente em outra ocasião.';
+    if (/Failed to fetch|NetworkError|dynamic import|fetch dynamically imported/i.test(msg)) guidance = 'O navegador não conseguiu baixar o módulo do Firebase. Verifique a conexão, extensões de bloqueio e a aba Console do Chrome.';
+    else if (/quota|429|resource.exhausted/i.test(msg)) guidance = 'O limite gratuito foi atingido ou houve excesso de solicitações. Tente novamente em outra ocasião.';
     else if (/403|permission|app.check|recaptcha|unauthenticat/i.test(msg)) guidance = 'Confirme a configuração do App Check, a chave pública do reCAPTCHA Enterprise e o domínio do GitHub Pages.';
     else if (/404|not found|no access|unsupported|video/i.test(msg)) guidance = 'O vídeo pode não estar disponível para processamento. Confirme se é público e acessível.';
     show('Não foi possível analisar este vídeo.', guidance + '\n\nDetalhe técnico: ' + msg.slice(0, 380));
